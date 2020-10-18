@@ -259,9 +259,8 @@ public class UsageTests {
         //dttt.printBoard();
 
         position = new TicTacToeBoardPosition("A", 0);
-        ttt.set(TicTacToePiece.O, position);
         dttt.printBoard();
-//        Assert.assertTrue(ttt.set(TicTacToePiece.O, position));
+        Assert.assertTrue(ttt.set(TicTacToePiece.O, position));
     }
 
     @Test
