@@ -52,7 +52,6 @@ public class ProtocolEngineTests {
         TicTacToeReadTester tttReceiver = new TicTacToeReadTester();
         TicTacToe tttProtocolReceiver = this.getTTTEngine(bais, null, tttReceiver);
 
-        // TODO
         TicTacToeProtocolEngine tttEngine = (TicTacToeProtocolEngine) tttProtocolReceiver;
         tttEngine.read();
 

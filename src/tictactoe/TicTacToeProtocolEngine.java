@@ -28,18 +28,21 @@ public class TicTacToeProtocolEngine implements TicTacToe {
             dos.writeInt(METHOD_PICK);
             // write user name
             dos.writeUTF(userName);
-            // serialize symbol
-            switch (wantedSymbol) {
-                case O: dos.writeInt(SYMBOL_0); break;
-                case X: dos.writeInt(SYMBOL_X); break;
-                default: throw new GameException("unknown symbol: " + wantedSymbol);
-            }
+            // serialize piece symbol
+            dos.writeInt(this.getIntValue4Piece(wantedSymbol));
+
+            /*
+            // read result
+            DataInputStream dis = new DataInputStream(this.is);
+            int symbolInt= dis.readInt();
+
+            return this.getPieceFromIntValue(symbolInt);
+             */
+            return wantedSymbol; // TODO
 
         } catch (IOException e) {
             throw new GameException("could not serialize command", e);
         }
-
-        return null; // !! TODO ??
     }
 
     private void deserializePick() throws GameException {
@@ -50,15 +53,34 @@ public class TicTacToeProtocolEngine implements TicTacToe {
             String userName = dis.readUTF();
             // read serialized symbol
             int symbolInt = dis.readInt();
-            switch (symbolInt) {
-                case SYMBOL_0: wantedSymbol = TicTacToePiece.O; break;
-                case SYMBOL_X: wantedSymbol = TicTacToePiece.X; break;
-                default: throw new GameException("unknown symbol: " + wantedSymbol);
-            }
+            // convert to symbol
+            wantedSymbol = this.getPieceFromIntValue(symbolInt);
 
-            this.gameEngine.pick(userName, wantedSymbol);
+            TicTacToePiece piece = this.gameEngine.pick(userName, wantedSymbol);
+
+            /*
+            // write result
+            DataOutputStream dos = new DataOutputStream(this.os);
+            dos.writeInt(this.getIntValue4Piece(piece));
+             */
         } catch (IOException | StatusException e) {
             throw new GameException("could not deserialize command", e);
+        }
+    }
+
+    private TicTacToePiece getPieceFromIntValue(int symbolInt) throws GameException {
+        switch (symbolInt) {
+            case SYMBOL_0: return TicTacToePiece.O;
+            case SYMBOL_X: return TicTacToePiece.X;
+            default: throw new GameException("unknown symbol: " + symbolInt);
+        }
+    }
+
+    private int getIntValue4Piece(TicTacToePiece piece) throws GameException {
+        switch (piece) {
+            case O: return SYMBOL_0;
+            case X: return SYMBOL_X;
+            default: throw new GameException("unknown symbol: " + piece);
         }
     }
 
@@ -70,11 +92,8 @@ public class TicTacToeProtocolEngine implements TicTacToe {
             // write method id
             dos.writeInt(METHOD_SET);
             // serialize symbol
-            switch (piece) {
-                case O: dos.writeInt(SYMBOL_0); break;
-                case X: dos.writeInt(SYMBOL_X); break;
-                default: throw new GameException("unknown symbol: " + piece);
-            }
+            dos.writeInt(this.getIntValue4Piece(piece));
+            // serialize position coordinates
             dos.writeUTF(position.getSCoordinate());
             dos.writeInt(position.getICoordinate());
 
@@ -87,15 +106,11 @@ public class TicTacToeProtocolEngine implements TicTacToe {
 
     private void deserializeSet() throws GameException {
         DataInputStream dis = new DataInputStream(this.is);
-        TicTacToePiece piece = null;
         try {
             // read serialized symbol
             int symbolInt = dis.readInt();
-            switch (symbolInt) {
-                case SYMBOL_0: piece = TicTacToePiece.O; break;
-                case SYMBOL_X: piece = TicTacToePiece.X; break;
-                default: throw new GameException("unknown symbol: " + piece);
-            }
+            // convert back to piece
+            TicTacToePiece piece = this.getPieceFromIntValue(symbolInt);
             // read s coordinate
             String sCoordinate = dis.readUTF();
             // read i coordinate
@@ -104,7 +119,7 @@ public class TicTacToeProtocolEngine implements TicTacToe {
             TicTacToeBoardPosition position = new TicTacToeBoardPosition(sCoordinate, iCoordinate);
 
             // call method
-            this.gameEngine.set(piece, position);
+            boolean won = this.gameEngine.set(piece, position);
         } catch (IOException | StatusException e) {
             throw new GameException("could not deserialize command", e);
         }
