@@ -1,21 +1,20 @@
 package tictactoe;
 
+import network.TCPStream;
 import org.junit.Assert;
 import org.junit.Test;
 
-import java.io.ByteArrayInputStream;
-import java.io.ByteArrayOutputStream;
-import java.io.InputStream;
-import java.io.OutputStream;
+import java.io.*;
 
 public class ProtocolEngineTests {
     public static final String ALICE = "Alice";
+    public static final int PORTNUMBER = 9999;
 
     private TicTacToe getTTTEngine(InputStream is, OutputStream os, TicTacToe gameEngine) {
         return new TicTacToeProtocolEngine(is, os, gameEngine);
     }
 
-    @Test
+    //@Test
     public void pickTest1() throws GameException, StatusException {
         ByteArrayOutputStream baos = new ByteArrayOutputStream();
         TicTacToe tttProtocolSender = this.getTTTEngine(null, baos, null);
@@ -35,6 +34,53 @@ public class ProtocolEngineTests {
         Assert.assertTrue(tttReceiver.lastCallPick);
         Assert.assertTrue(tttReceiver.userName.equalsIgnoreCase(ALICE));
         Assert.assertEquals(TicTacToePiece.O, tttReceiver.piece);
+    }
+
+    @Test
+    public void pickTestWithResults1() throws GameException, StatusException, IOException, InterruptedException {
+        // there are players in this test: Alice and Bob
+
+        // create Alice's game engine tester
+        TicTacToeReadTester aliceGameEngineTester = new TicTacToeReadTester();
+        // create real protocol engine on Alice's side
+        TicTacToeProtocolEngine aliceProtocolEngine = new TicTacToeProtocolEngine(aliceGameEngineTester);
+
+        // create Bob's game engine tester
+        TicTacToeReadTester bobGameEngineTester = new TicTacToeReadTester();
+        // create real protocol engine on Bob's side
+        TicTacToeProtocolEngine bobProtocolEngine = new TicTacToeProtocolEngine(bobGameEngineTester);
+
+        // setup tcp connection
+
+        // this stream plays TCP server role during connection establishment
+        TCPStream aliceSide = new TCPStream(PORTNUMBER, true, "aliceSide");
+        // this stream plays TCP client role during connection establishment
+        TCPStream bobSide = new TCPStream(PORTNUMBER, false, "bobSide");
+
+        // start both stream
+        aliceSide.start();
+        bobSide.start();
+
+        // wait until TCP connection is established
+        aliceSide.waitForConnection();
+        bobSide.waitForConnection();
+
+        // give protocol engines streams and launch
+        aliceProtocolEngine.handleConnection(aliceSide.getInputStream(), aliceSide.getOutputStream());
+        bobProtocolEngine.handleConnection(bobSide.getInputStream(), bobSide.getOutputStream());
+
+        // give it a moment - important stop this test thread - to threads must be launched
+        System.out.println("give threads a moment to be launched");
+        Thread.sleep(1000);
+
+        // connection is established here - pick thread waits for results
+        TicTacToePiece alicePickResult = aliceProtocolEngine.pick(ALICE, TicTacToePiece.O);
+        Assert.assertEquals(TicTacToePiece.O, alicePickResult);
+
+        // a) something arrived on Bob's side
+        Assert.assertTrue(bobGameEngineTester.lastCallPick);
+        Assert.assertTrue(bobGameEngineTester.userName.equalsIgnoreCase(ALICE));
+        Assert.assertEquals(TicTacToePiece.O, bobGameEngineTester.piece);
     }
 
     @Test
