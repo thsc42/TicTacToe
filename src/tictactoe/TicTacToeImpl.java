@@ -7,11 +7,13 @@ public class TicTacToeImpl implements TicTacToe, TicTacToeDebugHelper {
     HashMap<TicTacToePiece, String> player = new HashMap<>();
 
     @Override
-    public TicTacToePiece pick(String userName, TicTacToePiece wantedSymbol)
+    synchronized public TicTacToePiece pick(String userName, TicTacToePiece wantedSymbol)
             throws GameException, StatusException {
         if (this.status != Status.START && this.status != Status.ONE_PICKED) {
             throw new StatusException("pick call but wrong status");
         }
+
+        System.out.println("userName == " + userName + " | symbol == " + wantedSymbol);
 
         TicTacToePiece takenSymbol = null;
         // already taken a symbol?
@@ -28,26 +30,38 @@ public class TicTacToeImpl implements TicTacToe, TicTacToeDebugHelper {
         // user already got symbol?
         if(takenSymbol != null) { // yes - user got a symbol
             // wanted one?
-            if(takenSymbol == wantedSymbol) return wantedSymbol;
+            System.out.println(userName + " already got a symbol " + takenSymbol);
 
+            if(takenSymbol == wantedSymbol) {
+                System.out.println(userName + " wanted symbol is takenSymbol nothing to do here");
+                return wantedSymbol;
+            }
+
+            System.out.println(userName + " want's to change symbol ");
             // had a change of heart - can it be changed?
             if(this.player.get(wantedSymbol) == null) { // yes - can change
                 this.player.remove(takenSymbol);
                 this.player.put(wantedSymbol, userName);
+                System.out.println(userName + " changed symbol from " + takenSymbol + " to " + wantedSymbol);
                 return wantedSymbol;
             } else { // cannot change - other symbol is already taken - live with your previous choice
+                System.out.println(userName + " cannot change symbol will take: " + takenSymbol);
                 return takenSymbol;
             }
         } else { // no - no symbol taken yet
+            System.out.println(userName + " has no symbol yet: " + wantedSymbol);
             // wanted symbol available?
             if(this.player.get(wantedSymbol) == null) { // yes - symbol available
+                System.out.println(userName + " wanted symbol still available: " + wantedSymbol);
                 this.player.put(wantedSymbol, userName);
                 this.changeStatusAfterPickedSymbol();
                 return wantedSymbol;
             } else { // not - wanted symbol already taken
+                System.out.println(userName + " wanted symbol already taken: " + wantedSymbol);
                 TicTacToePiece otherSymbol = wantedSymbol == TicTacToePiece.O ? TicTacToePiece.X : TicTacToePiece.O;
                 this.player.put(otherSymbol, userName);
                 this.changeStatusAfterPickedSymbol();
+                System.out.println(userName + "taken instead " + otherSymbol);
                 return otherSymbol;
             }
         }

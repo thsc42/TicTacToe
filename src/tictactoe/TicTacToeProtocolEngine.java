@@ -16,9 +16,6 @@ public class TicTacToeProtocolEngine implements TicTacToe, Runnable, ProtocolEng
     public static final int SYMBOL_0 = 0;
     public static final int SYMBOL_X = 1;
 
-    private static final int NO_RESTRAINTS = 0;
-    private static final int WAIT_FOR_PICK_RESULT = 1;
-
     private Thread protocolThread = null;
     private Thread pickWaitThread = null;
     private TicTacToePiece pickResult;
