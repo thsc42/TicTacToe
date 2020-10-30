@@ -1,19 +1,52 @@
 package tictactoe;
 
 import java.util.HashMap;
+import java.util.Random;
 
 public class TicTacToeImpl implements TicTacToe, TicTacToeDebugHelper {
+    private static final String DEFAULT_PLAYERNAME = "anonPlayer";
+    private static final long WAITING_PERIOD_TO_AVOID_DEADLOCK = 1000;
+    private final String localPlayerName;
     private Status status = Status.START;
     HashMap<TicTacToePiece, String> player = new HashMap<>();
+    private TicTacToeProtocolEngine protocolEngine;
+
+    public TicTacToeImpl(String localPlayerName) {
+        this.localPlayerName = localPlayerName;
+    }
+
+    /**
+     * @deprecated for simple testing purpose only
+     */
+    TicTacToeImpl() {
+        this(DEFAULT_PLAYERNAME);
+    }
 
     @Override
-    synchronized public TicTacToePiece pick(String userName, TicTacToePiece wantedSymbol)
+    public TicTacToePiece pick(String userName, TicTacToePiece wantedSymbol)
             throws GameException, StatusException {
         if (this.status != Status.START && this.status != Status.ONE_PICKED) {
             throw new StatusException("pick call but wrong status");
         }
 
-        System.out.println("userName == " + userName + " | symbol == " + wantedSymbol);
+        boolean localCall = this.localPlayerName.equalsIgnoreCase(userName);
+        if(localCall) {
+            if(this.protocolEngine.getOracle()) {
+                // wait a while
+                try {
+                    System.out.println(this.localPlayerName + ": " + "wait a moment");
+                    Thread.sleep(WAITING_PERIOD_TO_AVOID_DEADLOCK);
+                } catch (InterruptedException e) {
+                    // ignore
+                }
+            }
+
+            System.out.println(this.localPlayerName + ": " + "localCall");
+            wantedSymbol = this.protocolEngine.pick(userName, wantedSymbol);
+            System.out.println(this.localPlayerName + ": " + "proceed with " + wantedSymbol);
+        }
+
+        System.out.println(this.localPlayerName + ": " + "userName == " + userName + " | symbol == " + wantedSymbol);
 
         TicTacToePiece takenSymbol = null;
         // already taken a symbol?
@@ -30,38 +63,38 @@ public class TicTacToeImpl implements TicTacToe, TicTacToeDebugHelper {
         // user already got symbol?
         if(takenSymbol != null) { // yes - user got a symbol
             // wanted one?
-            System.out.println(userName + " already got a symbol " + takenSymbol);
+            System.out.println(this.localPlayerName + ": " + userName + " already got a symbol " + takenSymbol);
 
             if(takenSymbol == wantedSymbol) {
-                System.out.println(userName + " wanted symbol is takenSymbol nothing to do here");
+                System.out.println(this.localPlayerName + ": " + userName + " wanted symbol is takenSymbol nothing to do here");
                 return wantedSymbol;
             }
 
-            System.out.println(userName + " want's to change symbol ");
+            System.out.println(this.localPlayerName + ": " + userName + " want's to change symbol ");
             // had a change of heart - can it be changed?
             if(this.player.get(wantedSymbol) == null) { // yes - can change
                 this.player.remove(takenSymbol);
                 this.player.put(wantedSymbol, userName);
-                System.out.println(userName + " changed symbol from " + takenSymbol + " to " + wantedSymbol);
+                System.out.println(this.localPlayerName + ": " + userName + " changed symbol from " + takenSymbol + " to " + wantedSymbol);
                 return wantedSymbol;
             } else { // cannot change - other symbol is already taken - live with your previous choice
-                System.out.println(userName + " cannot change symbol will take: " + takenSymbol);
+                System.out.println(this.localPlayerName + ": " + userName + " cannot change symbol will take: " + takenSymbol);
                 return takenSymbol;
             }
         } else { // no - no symbol taken yet
-            System.out.println(userName + " has no symbol yet: " + wantedSymbol);
+            System.out.println(this.localPlayerName + ": " + userName + " has no symbol yet: " + wantedSymbol);
             // wanted symbol available?
             if(this.player.get(wantedSymbol) == null) { // yes - symbol available
-                System.out.println(userName + " wanted symbol still available: " + wantedSymbol);
+                System.out.println(this.localPlayerName + ": " + userName + " wanted symbol still available: " + wantedSymbol);
                 this.player.put(wantedSymbol, userName);
                 this.changeStatusAfterPickedSymbol();
                 return wantedSymbol;
             } else { // not - wanted symbol already taken
-                System.out.println(userName + " wanted symbol already taken: " + wantedSymbol);
+                System.out.println(this.localPlayerName + ": " + userName + " wanted symbol already taken: " + wantedSymbol);
                 TicTacToePiece otherSymbol = wantedSymbol == TicTacToePiece.O ? TicTacToePiece.X : TicTacToePiece.O;
                 this.player.put(otherSymbol, userName);
                 this.changeStatusAfterPickedSymbol();
-                System.out.println(userName + "taken instead " + otherSymbol);
+                System.out.println(this.localPlayerName + ": " + userName + "taken instead " + otherSymbol);
                 return otherSymbol;
             }
         }
@@ -180,6 +213,15 @@ public class TicTacToeImpl implements TicTacToe, TicTacToeDebugHelper {
         }
         return iCoordinate;
     }
+
+    //////////////////////////////////////////////////////////////////////////////////////////////////////////
+    //                                       constructor helper                                             //
+    //////////////////////////////////////////////////////////////////////////////////////////////////////////
+
+    void setProtocolEngine(TicTacToeProtocolEngine protocolEngine) {
+        this.protocolEngine = protocolEngine;
+    }
+
 
     //////////////////////////////////////////////////////////////////////////////////////////////////////////
     //                                             debug helper                                             //

@@ -3,8 +3,11 @@ package tictactoe;
 import network.ProtocolEngine;
 
 import java.io.*;
+import java.util.Random;
 
 public class TicTacToeProtocolEngine implements TicTacToe, Runnable, ProtocolEngine {
+    private static final String DEFAULT_NAME = "anonymousProtocolEngine";
+    private String name;
     private OutputStream os;
     private InputStream is;
     private final TicTacToe gameEngine;
@@ -19,26 +22,27 @@ public class TicTacToeProtocolEngine implements TicTacToe, Runnable, ProtocolEng
     private Thread protocolThread = null;
     private Thread pickWaitThread = null;
     private TicTacToePiece pickResult;
+    private boolean oracle = false;
 
     /**
-     * @deprecated
-     * @param is
-     * @param os
+     * constructor has an additional name - helps debugging.
      * @param gameEngine
+     * @param name
      */
-    public TicTacToeProtocolEngine(InputStream is, OutputStream os, TicTacToe gameEngine) {
-        this.is = is;
-        this.os = os;
+    TicTacToeProtocolEngine(TicTacToe gameEngine, String name) {
         this.gameEngine = gameEngine;
+        this.name = name;
     }
 
     public TicTacToeProtocolEngine(TicTacToe gameEngine) {
-        this.gameEngine = gameEngine;
+        this(gameEngine, DEFAULT_NAME);
     }
 
     @Override
-    public TicTacToePiece pick(String userName, TicTacToePiece wantedSymbol) throws GameException, StatusException {
-        System.out.println("send pick message to other side");
+    public TicTacToePiece pick(String userName, TicTacToePiece wantedSymbol)
+            throws GameException, StatusException {
+
+        this.log("send pick message to other side");
         DataOutputStream dos = new DataOutputStream(this.os);
 
         try {
@@ -66,7 +70,7 @@ public class TicTacToeProtocolEngine implements TicTacToe, Runnable, ProtocolEng
                 Thread.sleep(Long.MAX_VALUE);
             } catch (InterruptedException e) {
                 // interrupted
-                System.out.println("pick thread back - results arrived");
+                this.log("pick thread back - results arrived");
             }
 
             // remember - we are not waiting any longer
@@ -80,7 +84,7 @@ public class TicTacToeProtocolEngine implements TicTacToe, Runnable, ProtocolEng
     }
 
     private void deserializeResultPick() throws GameException {
-        System.out.println("deserialize received pick result message");
+        this.log("deserialize received pick result message");
         DataInputStream dis = new DataInputStream(this.is);
         TicTacToePiece wantedSymbol = null;
         try {
@@ -97,7 +101,7 @@ public class TicTacToeProtocolEngine implements TicTacToe, Runnable, ProtocolEng
     }
 
     private void deserializePick() throws GameException {
-        System.out.println("deserialize received pick message");
+        this.log("deserialize received pick message");
         DataInputStream dis = new DataInputStream(this.is);
         TicTacToePiece wantedSymbol = null;
         try {
@@ -111,7 +115,7 @@ public class TicTacToeProtocolEngine implements TicTacToe, Runnable, ProtocolEng
             TicTacToePiece piece = this.gameEngine.pick(userName, wantedSymbol);
 
             // write result
-            System.out.println("going to send return value");
+            this.log("going to send return value");
             DataOutputStream dos = new DataOutputStream(this.os);
             dos.writeInt(RESULT_PICK);
             dos.writeInt(this.getIntValue4Piece(piece));
@@ -138,7 +142,7 @@ public class TicTacToeProtocolEngine implements TicTacToe, Runnable, ProtocolEng
 
     @Override
     public boolean set(TicTacToePiece piece, TicTacToeBoardPosition position) throws GameException {
-        System.out.println("send set message to other side");
+        this.log("send set message to other side");
         DataOutputStream dos = new DataOutputStream(this.os);
 
         try {
@@ -160,7 +164,7 @@ public class TicTacToeProtocolEngine implements TicTacToe, Runnable, ProtocolEng
     }
 
     private void deserializeSet() throws GameException {
-        System.out.println("deserialize received set message");
+        this.log("deserialize received set message");
         DataInputStream dis = new DataInputStream(this.is);
         try {
             // read serialized symbol
@@ -182,34 +186,62 @@ public class TicTacToeProtocolEngine implements TicTacToe, Runnable, ProtocolEng
         }
     }
 
-    public void read() throws GameException {
-        System.out.println("Protocol Engine: read from input stream");
+    boolean read() throws GameException {
+        this.log("Protocol Engine: read from input stream");
         DataInputStream dis = new DataInputStream(this.is);
 
         // read method id
         try {
             int commandID = dis.readInt();
             switch (commandID) {
-                case METHOD_PICK: this.deserializePick(); break;
-                case METHOD_SET: this.deserializeSet(); break;
-                case RESULT_PICK: this.deserializeResultPick(); break;
-                default: throw new GameException("unknown method id: " + commandID);
+                case METHOD_PICK: this.deserializePick(); return true;
+                case METHOD_SET: this.deserializeSet(); return true;
+                case RESULT_PICK: this.deserializeResultPick(); return true;
+                default: this.log("unknown method, throw exception id == " + commandID); return false;
+
             }
         } catch (IOException e) {
-            throw new GameException("could not deserialize command", e);
+            this.log("IOException caught - most probably connection close - stop thread / stop engine");
+            try {
+                this.close();
+            } catch (IOException ioException) {
+                // ignore
+            }
+            return false;
         }
     }
 
     @Override
     public void run() {
-        System.out.println("Protocol Engine started - read");
+        this.log("Protocol Engine started - flip a coin");
+        long seed = this.hashCode() * System.currentTimeMillis();
+        Random random = new Random(seed);
+
+        int localInt = 0, remoteInt = 0;
+        try {
+            do {
+                localInt = random.nextInt();
+                this.log("flip and take number " + localInt);
+                DataOutputStream dos = new DataOutputStream(this.os);
+                dos.writeInt(localInt);
+                DataInputStream dis = new DataInputStream(this.is);
+                remoteInt = dis.readInt();
+            } while(localInt == remoteInt);
+
+        } catch (IOException e) {
+            e.printStackTrace();
+        }
+
+        this.oracle = localInt < remoteInt;
+        this.log("Flipped a coin and got an oracle == " + this.oracle);
 
         try {
-            while(true) {
-                    this.read();
+            boolean again = true;
+            while(again) {
+                    again = this.read();
             }
         } catch (GameException e) {
-            System.err.println("exception called in protocol engine thread - fatal and stop");
+            this.logError("exception called in protocol engine thread - fatal and stop");
             e.printStackTrace();
             // leave while - end thread
         }
@@ -222,5 +254,37 @@ public class TicTacToeProtocolEngine implements TicTacToe, Runnable, ProtocolEng
 
         this.protocolThread = new Thread(this);
         this.protocolThread.start();
+    }
+
+    @Override
+    public void close() throws IOException {
+        if(this.os != null) { this.os.close();}
+        if(this.is != null) { this.is.close();}
+    }
+
+    @Override
+    public boolean getOracle() {
+        this.log("asked for an oracle - return " + this.oracle);
+        return this.oracle;
+    }
+
+    private String produceLogString(String message) {
+        StringBuilder sb = new StringBuilder();
+        if(this.name != null) {
+            sb.append(this.name);
+            sb.append(": ");
+        }
+
+        sb.append(message);
+
+        return sb.toString();
+    }
+
+    private void log(String message) {
+        System.out.println(this.produceLogString(message));
+    }
+
+    private void logError(String message) {
+        System.err.println(this.produceLogString(message));
     }
 }

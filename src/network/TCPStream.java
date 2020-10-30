@@ -58,7 +58,7 @@ public class TCPStream extends Thread {
                     this.tcpServer.kill();
             }
         } catch (IOException e) {
-            System.err.println("TCPChannel: problems while killing: " + e.getLocalizedMessage());
+            System.err.println(this.getClass().getSimpleName() + ": problems while killing: " + e.getLocalizedMessage());
         }
     }
     
@@ -168,7 +168,8 @@ public class TCPStream extends Thread {
 
             //<<<<<<<<<<<<<<<<<<debug
             StringBuilder b = new StringBuilder();
-            b.append("TCPChannel (");
+            b.append(this.getClass().getSimpleName());
+            b.append(" (");
             b.append(name);
             b.append("): ");
             b.append("opened port ");
@@ -180,7 +181,8 @@ public class TCPStream extends Thread {
             Socket socket = this.srvSocket.accept();
             //<<<<<<<<<<<<<<<<<<debug
             b = new StringBuilder();
-            b.append("TCPChannel (");
+            b.append(this.getClass().getSimpleName());
+            b.append(" (");
             b.append(name);
             b.append("): ");
             b.append("connected");
@@ -207,7 +209,8 @@ public class TCPStream extends Thread {
                 try {
                     //<<<<<<<<<<<<<<<<<<debug
                     StringBuilder b = new StringBuilder();
-                    b.append("TCPChannel (");
+                    b.append(this.getClass().getSimpleName());
+                    b.append(" (");
                     b.append(name);
                     b.append("): ");
                     b.append("try to connect localhost port ");
@@ -220,7 +223,8 @@ public class TCPStream extends Thread {
                 catch(IOException ioe) {
                     //<<<<<<<<<<<<<<<<<<debug
                     StringBuilder b = new StringBuilder();
-                    b.append("TCPChannel (");
+                    b.append(this.getClass().getSimpleName());
+                    b.append(" (");
                     b.append(name);
                     b.append("): ");
                     b.append("failed / wait and re-try");
