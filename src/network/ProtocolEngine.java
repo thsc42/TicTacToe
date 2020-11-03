@@ -1,5 +1,7 @@
 package network;
 
+import tictactoe.StatusException;
+
 import java.io.IOException;
 import java.io.InputStream;
 import java.io.OutputStream;
@@ -22,6 +24,7 @@ public interface ProtocolEngine {
     /**
      *
      * @return boolean value - ensure that both side use different ons
+     * @throws StatusException if oracle not yet set
      */
-    boolean getOracle();
+    boolean getOracle() throws StatusException;
 }

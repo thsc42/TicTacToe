@@ -24,6 +24,7 @@ public class TCPStream extends Thread {
     private TCPServer tcpServer = null;
     private TCPClient tcpClient = null;
     private long waitInMillis = WAIT_LOOP_IN_MILLIS;
+    private String remoteEngine = "localhost";
 
     public TCPStream(int port, boolean asServer, String name, TCPStreamCreatedListener listener) {
         this.port = port;
@@ -157,7 +158,11 @@ public class TCPStream extends Thread {
         this.checkConnected();
         return this.socket.getOutputStream();
     }
-    
+
+    public void setRemoteEngine(String remoteEngine) {
+        this.remoteEngine = remoteEngine;
+    }
+
     private class TCPServer {
         private ServerSocket srvSocket = null;
 
@@ -217,7 +222,7 @@ public class TCPStream extends Thread {
                     b.append(port);
                     System.out.println(b.toString());
                     //>>>>>>>>>>>>>>>>>>>debug
-                    Socket socket = new Socket("localhost", port);
+                    Socket socket = new Socket(TCPStream.this.remoteEngine, port);
                     return socket;
                 }
                 catch(IOException ioe) {

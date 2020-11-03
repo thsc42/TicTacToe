@@ -22,7 +22,8 @@ public class TicTacToeProtocolEngine implements TicTacToe, Runnable, ProtocolEng
     private Thread protocolThread = null;
     private Thread pickWaitThread = null;
     private TicTacToePiece pickResult;
-    private boolean oracle = false;
+    private boolean oracle;
+    private boolean oracleSet = false;
 
     /**
      * constructor has an additional name - helps debugging.
@@ -234,6 +235,7 @@ public class TicTacToeProtocolEngine implements TicTacToe, Runnable, ProtocolEng
 
         this.oracle = localInt < remoteInt;
         this.log("Flipped a coin and got an oracle == " + this.oracle);
+        this.oracleSet = true;
 
         try {
             boolean again = true;
@@ -263,7 +265,7 @@ public class TicTacToeProtocolEngine implements TicTacToe, Runnable, ProtocolEng
     }
 
     @Override
-    public boolean getOracle() {
+    public boolean getOracle() throws StatusException {
         this.log("asked for an oracle - return " + this.oracle);
         return this.oracle;
     }

@@ -218,7 +218,7 @@ public class TicTacToeImpl implements TicTacToe, TicTacToeDebugHelper {
     //                                       constructor helper                                             //
     //////////////////////////////////////////////////////////////////////////////////////////////////////////
 
-    void setProtocolEngine(TicTacToeProtocolEngine protocolEngine) {
+    public void setProtocolEngine(TicTacToeProtocolEngine protocolEngine) {
         this.protocolEngine = protocolEngine;
     }
 

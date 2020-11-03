@@ -1,6 +1,8 @@
 package tictactoe;
 
 public interface TicTacToe {
+    int DEFAULT_PORT = 6907;
+
     /**
      * Pick a symbol
      * @param userName user name
