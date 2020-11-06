@@ -1,6 +1,5 @@
 package tictactoe;
 
-import network.ProtocolEngine;
 import network.TCPStream;
 import org.junit.Assert;
 import org.junit.Test;
@@ -20,6 +19,7 @@ public class ProtocolEngineTests {
         return ticTacToeProtocolEngine;
     }
 
+    /*
     private class TicTacToeReadTester implements TicTacToe {
         private boolean lastCallPick = false;
         private boolean lastCallSet = false;
@@ -48,6 +48,7 @@ public class ProtocolEngineTests {
             return false;
         }
     }
+     */
 
     private int getPortNumber() {
         if(ProtocolEngineTests.port == 0) {
@@ -84,6 +85,7 @@ public class ProtocolEngineTests {
     }
      */
 
+    /*
     @Test
     public void setTest1() throws GameException, StatusException, IOException {
         ByteArrayOutputStream baos = new ByteArrayOutputStream();
@@ -107,7 +109,9 @@ public class ProtocolEngineTests {
         Assert.assertTrue(tttReceiver.position.getSCoordinate().equalsIgnoreCase("A"));
         Assert.assertEquals(0, tttReceiver.position.getICoordinate());
     }
+     */
 
+    /*
     @Test
     public void pickNetworkTest() throws GameException, StatusException, IOException, InterruptedException {
         // there are players in this test: Alice and Bob
@@ -178,6 +182,7 @@ public class ProtocolEngineTests {
         // stop test thread to allow operating system to close sockets
         Thread.sleep(TEST_THREAD_SLEEP_DURATION);
     }
+    */
 
     /**
      * Test protocol engine alone but over a network with implemented threads. No race conditions are tested here.
@@ -188,7 +193,79 @@ public class ProtocolEngineTests {
      * @throws InterruptedException
      */
     @Test
-    public void integrationTestPick() throws GameException, StatusException, IOException, InterruptedException {
+    public void integrationTest1() throws GameException, StatusException, IOException, InterruptedException {
+        // there are players in this test: Alice and Bob
+
+        // create Alice's game engine
+        TicTacToeImpl aliceGameEngine = new TicTacToeImpl(ALICE);
+        // create real protocol engine on Alice's side
+        TicTacToeProtocolEngine aliceTicTacToeProtocolEngine =
+                new TicTacToeProtocolEngine(aliceGameEngine, ALICE);
+
+        aliceGameEngine.setProtocolEngine(aliceTicTacToeProtocolEngine);
+
+        // create Bob's game engine
+        TicTacToeImpl bobGameEngine = new TicTacToeImpl(BOB);
+        // create real protocol engine on Bob's side
+        TicTacToeProtocolEngine bobTicTacToeProtocolEngine =
+                new TicTacToeProtocolEngine(bobGameEngine, BOB);
+
+        bobGameEngine.setProtocolEngine(bobTicTacToeProtocolEngine);
+
+        ////////////////////////////////////////////////////////////////////////////////////////////////////////////
+        //                                           setup tcp                                                    //
+        ////////////////////////////////////////////////////////////////////////////////////////////////////////////
+        int port = this.getPortNumber();
+        // this stream plays TCP server role during connection establishment
+        TCPStream aliceSide = new TCPStream(port, true, "aliceSide");
+        // this stream plays TCP client role during connection establishment
+        TCPStream bobSide = new TCPStream(port, false, "bobSide");
+        // start both stream
+        aliceSide.start(); bobSide.start();
+        // wait until TCP connection is established
+        aliceSide.waitForConnection(); bobSide.waitForConnection();
+
+        ////////////////////////////////////////////////////////////////////////////////////////////////////////////
+        //                                       launch protocol engine                                           //
+        ////////////////////////////////////////////////////////////////////////////////////////////////////////////
+        // give protocol engines streams and launch
+        aliceTicTacToeProtocolEngine.handleConnection(aliceSide.getInputStream(), aliceSide.getOutputStream());
+        bobTicTacToeProtocolEngine.handleConnection(bobSide.getInputStream(), bobSide.getOutputStream());
+
+        // give it a moment - important stop this test thread - to threads must be launched
+        System.out.println("give threads a moment to be launched");
+        Thread.sleep(TEST_THREAD_SLEEP_DURATION);
+
+        ////////////////////////////////////////////////////////////////////////////////////////////////////////////
+        //                                             test results                                               //
+        ////////////////////////////////////////////////////////////////////////////////////////////////////////////
+
+        // pieces must not be same
+        Assert.assertTrue(aliceGameEngine.getStatus() == bobGameEngine.getStatus());
+
+        ////////////////////////////////////////////////////////////////////////////////////////////////////////////
+        //                                             tidy up                                                    //
+        ////////////////////////////////////////////////////////////////////////////////////////////////////////////
+
+        aliceTicTacToeProtocolEngine.close();
+        bobTicTacToeProtocolEngine.close();
+
+        // stop test thread to allow operating system to close sockets
+        Thread.sleep(TEST_THREAD_SLEEP_DURATION);
+
+        // Thread.sleep(Long.MAX_VALUE); // debugging
+    }
+
+    /**
+     * Test protocol engine alone but over a network with implemented threads. No race conditions are tested here.
+     * Can be done in an integration test.
+     * @throws GameException
+     * @throws StatusException
+     * @throws IOException
+     * @throws InterruptedException
+     */
+    @Test
+    public void integrationTestFullGame() throws GameException, StatusException, IOException, InterruptedException {
         // there are players in this test: Alice and Bob
 
         // create Alice's game engine
@@ -235,22 +312,36 @@ public class ProtocolEngineTests {
         //                                             run scenario                                               //
         ////////////////////////////////////////////////////////////////////////////////////////////////////////////
 
-        // connection is established here - pick thread waits for results
-        TicTacToePiece alicePickResult = aliceGameEngine.pick(ALICE, TicTacToePiece.O);
-        TicTacToePiece bobPickResult = bobGameEngine.pick(BOB, TicTacToePiece.O);
+        TicTacToeLocalBoard playerFirst = aliceGameEngine.isActive() ? aliceGameEngine : bobGameEngine;
+        TicTacToeLocalBoard playerSecond = aliceGameEngine.isActive() ? bobGameEngine : aliceGameEngine;
 
+        TicTacToeBoardPosition position =
+        new TicTacToeBoardPosition("C", 0);
+        Assert.assertFalse(playerFirst.set(TicTacToePiece.O, position));
+        Thread.sleep(TEST_THREAD_SLEEP_DURATION);
+
+        position = new TicTacToeBoardPosition("C", 1);
+        Assert.assertFalse(playerSecond.set(TicTacToePiece.X, position));
+        Thread.sleep(TEST_THREAD_SLEEP_DURATION);
+
+        position = new TicTacToeBoardPosition("B", 1);
+        Assert.assertFalse(playerFirst.set(TicTacToePiece.O, position));
+        Thread.sleep(TEST_THREAD_SLEEP_DURATION);
+
+        position = new TicTacToeBoardPosition("B", 0);
+        Assert.assertFalse(playerSecond.set(TicTacToePiece.X, position));
+        Thread.sleep(TEST_THREAD_SLEEP_DURATION);
+
+        position = new TicTacToeBoardPosition("A", 2);
+        Assert.assertTrue(playerFirst.set(TicTacToePiece.O, position));
         Thread.sleep(TEST_THREAD_SLEEP_DURATION);
 
         ////////////////////////////////////////////////////////////////////////////////////////////////////////////
         //                                             test results                                               //
         ////////////////////////////////////////////////////////////////////////////////////////////////////////////
 
-        // pieces must not be same
-        Assert.assertTrue(alicePickResult != bobPickResult);
-
-        // both got a piece
-        Assert.assertNotNull(alicePickResult);
-        Assert.assertNotNull(bobPickResult);
+        Assert.assertTrue(playerFirst.hasWon());
+        Assert.assertTrue(playerSecond.hasLost());
 
         ////////////////////////////////////////////////////////////////////////////////////////////////////////////
         //                                             tidy up                                                    //

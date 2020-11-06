@@ -37,7 +37,7 @@ public class TCPStream extends Thread {
         this(port, asServer, name, null);
     }
 
-    public void setListener(TCPStreamCreatedListener listener) {
+    public void setStreamCreationListener(TCPStreamCreatedListener listener) {
         this.listener = listener;
     }
 

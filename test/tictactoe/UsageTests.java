@@ -8,20 +8,20 @@ public class UsageTests {
     public static final String BOB = "Bob";
     public static final String CLARA = "Clara";
 
-    private TicTacToe getTicTacToe() {
-        return new TicTacToeImpl();
+    private TicTacToeLocalBoard getTicTacToe() {
+        return new TicTacToeImpl("undistributedBoard");
     }
 
     @Test
     public void goodPickSymbol1() throws GameException, StatusException {
-        TicTacToe ttt = this.getTicTacToe();
+        TicTacToeLocalBoard ttt = this.getTicTacToe();
         TicTacToePiece aliceSymbol = ttt.pick(ALICE, TicTacToePiece.O);
         Assert.assertEquals(TicTacToePiece.O, aliceSymbol);
     }
 
     @Test
     public void goodPickSymbol2() throws GameException, StatusException {
-        TicTacToe ttt = this.getTicTacToe();
+        TicTacToeLocalBoard ttt = this.getTicTacToe();
         TicTacToePiece aliceSymbol = ttt.pick(ALICE, TicTacToePiece.O);
         TicTacToePiece bobSymbol = ttt.pick(BOB, TicTacToePiece.X);
         Assert.assertEquals(TicTacToePiece.O, aliceSymbol);
@@ -30,7 +30,7 @@ public class UsageTests {
 
     @Test
     public void goodPickSymbol3() throws GameException, StatusException {
-        TicTacToe ttt = this.getTicTacToe();
+        TicTacToeLocalBoard ttt = this.getTicTacToe();
         TicTacToePiece aliceSymbol = ttt.pick(ALICE, TicTacToePiece.O);
         TicTacToePiece bobSymbol = ttt.pick(BOB, TicTacToePiece.O);
         Assert.assertEquals(TicTacToePiece.O, aliceSymbol);
@@ -39,7 +39,7 @@ public class UsageTests {
 
     @Test
     public void goodPickSymbol4() throws GameException, StatusException {
-        TicTacToe ttt = this.getTicTacToe();
+        TicTacToeLocalBoard ttt = this.getTicTacToe();
         TicTacToePiece bobSymbol = ttt.pick(BOB, TicTacToePiece.O);
         TicTacToePiece aliceSymbol = ttt.pick(ALICE, TicTacToePiece.O);
         Assert.assertEquals(TicTacToePiece.X, aliceSymbol);
@@ -48,7 +48,7 @@ public class UsageTests {
 
     @Test(expected=StatusException.class)
     public void failurePickSymbol3times() throws GameException, StatusException {
-        TicTacToe ttt = this.getTicTacToe();
+        TicTacToeLocalBoard ttt = this.getTicTacToe();
         ttt.pick(ALICE, TicTacToePiece.O);
         ttt.pick(BOB, TicTacToePiece.O);
         ttt.pick(CLARA, TicTacToePiece.O);
@@ -56,7 +56,7 @@ public class UsageTests {
 
     @Test
     public void goodPickSymbol5() throws GameException, StatusException {
-        TicTacToe ttt = this.getTicTacToe();
+        TicTacToeLocalBoard ttt = this.getTicTacToe();
         TicTacToePiece aliceSymbol = ttt.pick(ALICE, TicTacToePiece.O);
         // reconsidered
         aliceSymbol = ttt.pick(ALICE, TicTacToePiece.X);
@@ -67,9 +67,9 @@ public class UsageTests {
 
     @Test
     public void goodSet1() throws GameException, StatusException {
-        TicTacToe ttt = this.getTicTacToe();
+        TicTacToeLocalBoard ttt = this.getTicTacToe();
         TicTacToePiece aliceSymbol = ttt.pick(ALICE, TicTacToePiece.O);
-        TicTacToePiece bobSymbol = ttt.pick(BOB, TicTacToePiece.O);
+        TicTacToePiece bobSymbol = ttt.pick(BOB, TicTacToePiece.X);
 
         TicTacToeBoardPosition position =
                 new TicTacToeBoardPosition("A", 2);
@@ -79,7 +79,7 @@ public class UsageTests {
 
     @Test(expected=GameException.class)
     public void failureSetOutSide() throws GameException, StatusException {
-        TicTacToe ttt = this.getTicTacToe();
+        TicTacToeLocalBoard ttt = this.getTicTacToe();
         TicTacToePiece aliceSymbol = ttt.pick(ALICE, TicTacToePiece.O);
         TicTacToePiece bobSymbol = ttt.pick(BOB, TicTacToePiece.O);
 
@@ -91,7 +91,7 @@ public class UsageTests {
 
     @Test(expected=GameException.class)
     public void failureSetOutSide2() throws GameException, StatusException {
-        TicTacToe ttt = this.getTicTacToe();
+        TicTacToeLocalBoard ttt = this.getTicTacToe();
         TicTacToePiece aliceSymbol = ttt.pick(ALICE, TicTacToePiece.O);
         TicTacToePiece bobSymbol = ttt.pick(BOB, TicTacToePiece.O);
 
@@ -103,7 +103,7 @@ public class UsageTests {
 
     @Test
     public void marginSet1() throws GameException, StatusException {
-        TicTacToe ttt = this.getTicTacToe();
+        TicTacToeLocalBoard ttt = this.getTicTacToe();
         TicTacToePiece aliceSymbol = ttt.pick(ALICE, TicTacToePiece.O);
         TicTacToePiece bobSymbol = ttt.pick(BOB, TicTacToePiece.O);
 
@@ -115,7 +115,7 @@ public class UsageTests {
 
     @Test
     public void marginSet2() throws GameException, StatusException {
-        TicTacToe ttt = this.getTicTacToe();
+        TicTacToeLocalBoard ttt = this.getTicTacToe();
         TicTacToePiece aliceSymbol = ttt.pick(ALICE, TicTacToePiece.O);
         TicTacToePiece bobSymbol = ttt.pick(BOB, TicTacToePiece.O);
 
@@ -142,7 +142,7 @@ public class UsageTests {
 
     @Test(expected=StatusException.class)
     public void failureStatus2() throws GameException, StatusException {
-        TicTacToe ttt = this.getTicTacToe();
+        TicTacToeLocalBoard ttt = this.getTicTacToe();
         TicTacToePiece aliceSymbol = ttt.pick(ALICE, TicTacToePiece.O);
         TicTacToePiece bobSymbol = ttt.pick(BOB, TicTacToePiece.O);
 
@@ -155,7 +155,7 @@ public class UsageTests {
 
     @Test
     public void goodCompleteGame() throws GameException, StatusException {
-        TicTacToe ttt = this.getTicTacToe();
+        TicTacToeLocalBoard ttt = this.getTicTacToe();
         TicTacToePiece aliceSymbol = ttt.pick(ALICE, TicTacToePiece.O);
         TicTacToePiece bobSymbol = ttt.pick(BOB, TicTacToePiece.X);
 
@@ -178,7 +178,7 @@ public class UsageTests {
 
     @Test(expected=GameException.class)
     public void failureSetSamePosition() throws GameException, StatusException {
-        TicTacToe ttt = this.getTicTacToe();
+        TicTacToeLocalBoard ttt = this.getTicTacToe();
         TicTacToePiece aliceSymbol = ttt.pick(ALICE, TicTacToePiece.O);
         TicTacToePiece bobSymbol = ttt.pick(BOB, TicTacToePiece.O);
 
@@ -191,7 +191,7 @@ public class UsageTests {
 
     @Test
     public void goodCompleteGame2() throws GameException, StatusException {
-        TicTacToe ttt = this.getTicTacToe();
+        TicTacToeLocalBoard ttt = this.getTicTacToe();
         TicTacToePiece aliceSymbol = ttt.pick(ALICE, TicTacToePiece.O);
         TicTacToePiece bobSymbol = ttt.pick(BOB, TicTacToePiece.X);
 
@@ -214,7 +214,7 @@ public class UsageTests {
 
     @Test
     public void goodCompleteGame3() throws GameException, StatusException {
-        TicTacToe ttt = this.getTicTacToe();
+        TicTacToeLocalBoard ttt = this.getTicTacToe();
         TicTacToePiece aliceSymbol = ttt.pick(ALICE, TicTacToePiece.O);
         TicTacToePiece bobSymbol = ttt.pick(BOB, TicTacToePiece.X);
 
@@ -237,7 +237,7 @@ public class UsageTests {
 
     @Test
     public void goodCompleteGameDiagonal1() throws GameException, StatusException {
-        TicTacToe ttt = this.getTicTacToe();
+        TicTacToeLocalBoard ttt = this.getTicTacToe();
         TicTacToePiece aliceSymbol = ttt.pick(ALICE, TicTacToePiece.O);
         TicTacToePiece bobSymbol = ttt.pick(BOB, TicTacToePiece.X);
 
@@ -254,18 +254,13 @@ public class UsageTests {
         position = new TicTacToeBoardPosition("B", 0);
         Assert.assertFalse(ttt.set(TicTacToePiece.X, position));
 
-        // debug backdoor
-        TicTacToeDebugHelper dttt = (TicTacToeDebugHelper) ttt;
-        //dttt.printBoard();
-
         position = new TicTacToeBoardPosition("A", 0);
-        dttt.printBoard();
         Assert.assertTrue(ttt.set(TicTacToePiece.O, position));
     }
 
     @Test
     public void goodCompleteGameDiagonal2() throws GameException, StatusException {
-        TicTacToe ttt = this.getTicTacToe();
+        TicTacToeLocalBoard ttt = this.getTicTacToe();
         TicTacToePiece aliceSymbol = ttt.pick(ALICE, TicTacToePiece.O);
         TicTacToePiece bobSymbol = ttt.pick(BOB, TicTacToePiece.X);
 

@@ -1,8 +1,11 @@
 package tictactoe;
 
+import network.GameSessionEstablishedListener;
 import network.ProtocolEngine;
 
 import java.io.*;
+import java.util.ArrayList;
+import java.util.List;
 import java.util.Random;
 
 public class TicTacToeProtocolEngine implements TicTacToe, Runnable, ProtocolEngine {
@@ -12,25 +15,25 @@ public class TicTacToeProtocolEngine implements TicTacToe, Runnable, ProtocolEng
     private InputStream is;
     private final TicTacToe gameEngine;
 
-    public static final int METHOD_PICK = 0;
+//    public static final int METHOD_PICK = 0;
     public static final int METHOD_SET = 1;
-    public static final int RESULT_PICK = 2;
+//    public static final int RESULT_PICK = 2;
 
     public static final int SYMBOL_0 = 0;
     public static final int SYMBOL_X = 1;
 
     private Thread protocolThread = null;
-    private Thread pickWaitThread = null;
-    private TicTacToePiece pickResult;
+//    private Thread pickWaitThread = null;
+//    private TicTacToePiece pickResult;
     private boolean oracle;
-    private boolean oracleSet = false;
+    private String partnerName;
 
     /**
      * constructor has an additional name - helps debugging.
      * @param gameEngine
      * @param name
      */
-    TicTacToeProtocolEngine(TicTacToe gameEngine, String name) {
+    public TicTacToeProtocolEngine(TicTacToe gameEngine, String name) {
         this.gameEngine = gameEngine;
         this.name = name;
     }
@@ -39,11 +42,17 @@ public class TicTacToeProtocolEngine implements TicTacToe, Runnable, ProtocolEng
         this(gameEngine, DEFAULT_NAME);
     }
 
+    /* discarded the whole stuff - make only problems ;)
+     *
+     * @param userName user name
+     * @param wantedSymbol user asks for this symbol. It can be a race condition
+     * @return
+     * @throws GameException
+     * @throws StatusException
     @Override
     public TicTacToePiece pick(String userName, TicTacToePiece wantedSymbol)
             throws GameException, StatusException {
 
-        this.log("send pick message to other side");
         DataOutputStream dos = new DataOutputStream(this.os);
 
         try {
@@ -64,8 +73,7 @@ public class TicTacToeProtocolEngine implements TicTacToe, Runnable, ProtocolEng
             System.out.println("back from reading");
 
             return this.getPieceFromIntValue(symbolInt);
-             */
-
+            looks good as well but is not either
             try {
                 this.pickWaitThread = Thread.currentThread();
                 Thread.sleep(Long.MAX_VALUE);
@@ -124,6 +132,7 @@ public class TicTacToeProtocolEngine implements TicTacToe, Runnable, ProtocolEng
             throw new GameException("could not deserialize command", e);
         }
     }
+*/
 
     private TicTacToePiece getPieceFromIntValue(int symbolInt) throws GameException {
         switch (symbolInt) {
@@ -195,9 +204,9 @@ public class TicTacToeProtocolEngine implements TicTacToe, Runnable, ProtocolEng
         try {
             int commandID = dis.readInt();
             switch (commandID) {
-                case METHOD_PICK: this.deserializePick(); return true;
+//                case METHOD_PICK: this.deserializePick(); return true;
                 case METHOD_SET: this.deserializeSet(); return true;
-                case RESULT_PICK: this.deserializeResultPick(); return true;
+//                case RESULT_PICK: this.deserializeResultPick(); return true;
                 default: this.log("unknown method, throw exception id == " + commandID); return false;
 
             }
@@ -220,22 +229,46 @@ public class TicTacToeProtocolEngine implements TicTacToe, Runnable, ProtocolEng
 
         int localInt = 0, remoteInt = 0;
         try {
+            DataOutputStream dos = new DataOutputStream(this.os);
+            DataInputStream dis = new DataInputStream(this.is);
             do {
                 localInt = random.nextInt();
                 this.log("flip and take number " + localInt);
-                DataOutputStream dos = new DataOutputStream(this.os);
                 dos.writeInt(localInt);
-                DataInputStream dis = new DataInputStream(this.is);
                 remoteInt = dis.readInt();
             } while(localInt == remoteInt);
 
+            this.oracle = localInt < remoteInt;
+            this.log("Flipped a coin and got an oracle == " + this.oracle);
+            //this.oracleSet = true;
+
+            // finally - exchange names
+            dos.writeUTF(this.name);
+            this.partnerName = dis.readUTF();
         } catch (IOException e) {
             e.printStackTrace();
         }
 
-        this.oracle = localInt < remoteInt;
-        this.log("Flipped a coin and got an oracle == " + this.oracle);
-        this.oracleSet = true;
+
+        // TODO - explain
+        // call listener
+        if(this.sessionCreatedListenerList != null && !this.sessionCreatedListenerList.isEmpty()) {
+            for(GameSessionEstablishedListener oclistener : this.sessionCreatedListenerList) {
+                new Thread(new Runnable() {
+                    @Override
+                    public void run() {
+                        try {
+                            Thread.sleep(1); // block a moment to let read thread start - just in case
+                        } catch (InterruptedException e) {
+                            // will not happen
+                        }
+                        oclistener.gameSessionEstablished(
+                                TicTacToeProtocolEngine.this.oracle,
+                                TicTacToeProtocolEngine.this.partnerName);
+                    }
+                }).start();
+            }
+        }
 
         try {
             boolean again = true;
@@ -268,6 +301,22 @@ public class TicTacToeProtocolEngine implements TicTacToe, Runnable, ProtocolEng
     public boolean getOracle() throws StatusException {
         this.log("asked for an oracle - return " + this.oracle);
         return this.oracle;
+    }
+
+    private List<GameSessionEstablishedListener> sessionCreatedListenerList = new ArrayList<>();
+
+    ///////////////////////////////////////////////////////////////////////////////////////////////////////////
+    //                                         oracle creation listener                                      //
+    ///////////////////////////////////////////////////////////////////////////////////////////////////////////
+
+    @Override
+    public void subscribeGameSessionEstablishedListener(GameSessionEstablishedListener ocListener) {
+        this.sessionCreatedListenerList.add(ocListener);
+    }
+
+    @Override
+    public void unsubscribeGameSessionEstablishedListener(GameSessionEstablishedListener ocListener) {
+        this.sessionCreatedListenerList.remove(ocListener);
     }
 
     private String produceLogString(String message) {

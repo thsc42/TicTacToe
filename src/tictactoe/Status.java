@@ -1,6 +1,6 @@
 package tictactoe;
 
-enum Status {
+public enum Status {
     START, // 1
     ONE_PICKED, // 1.1
     ACTIVE_O, // 2.1

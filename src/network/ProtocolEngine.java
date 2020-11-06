@@ -27,4 +27,8 @@ public interface ProtocolEngine {
      * @throws StatusException if oracle not yet set
      */
     boolean getOracle() throws StatusException;
+
+    void subscribeGameSessionEstablishedListener(GameSessionEstablishedListener ocListener);
+
+    void unsubscribeGameSessionEstablishedListener(GameSessionEstablishedListener ocListener);
 }

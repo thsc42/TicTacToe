@@ -1,15 +1,24 @@
 package tictactoe;
 
-import java.util.HashMap;
-import java.util.Random;
+import network.GameSessionEstablishedListener;
+import view.PrintStreamView;
+import view.TicTacToePrintStreamView;
 
-public class TicTacToeImpl implements TicTacToe, TicTacToeDebugHelper {
+import java.util.ArrayList;
+import java.util.HashMap;
+import java.util.List;
+
+public class TicTacToeImpl implements TicTacToe, TicTacToeLocalBoard, GameSessionEstablishedListener {
     private static final String DEFAULT_PLAYERNAME = "anonPlayer";
-    private static final long WAITING_PERIOD_TO_AVOID_DEADLOCK = 1000;
+//    private static final long WAITING_PERIOD_TO_AVOID_DEADLOCK = 1000;
     private final String localPlayerName;
+    private String remotePlayerName;
     private Status status = Status.START;
     HashMap<TicTacToePiece, String> player = new HashMap<>();
     private TicTacToeProtocolEngine protocolEngine;
+    private TicTacToePiece localSymbol;
+    private TicTacToePiece remoteSymbol;
+    private boolean localWon;
 
     public TicTacToeImpl(String localPlayerName) {
         this.localPlayerName = localPlayerName;
@@ -22,28 +31,20 @@ public class TicTacToeImpl implements TicTacToe, TicTacToeDebugHelper {
         this(DEFAULT_PLAYERNAME);
     }
 
+    /**
+     * produce print stream view - TODO discuss - not a perfect solution, though
+     * @return
+     */
+    public PrintStreamView getPrintStreamView() {
+        return new TicTacToePrintStreamView(this.board);
+    }
+
     @Override
     public TicTacToePiece pick(String userName, TicTacToePiece wantedSymbol)
             throws GameException, StatusException {
+
         if (this.status != Status.START && this.status != Status.ONE_PICKED) {
             throw new StatusException("pick call but wrong status");
-        }
-
-        boolean localCall = this.localPlayerName.equalsIgnoreCase(userName);
-        if(localCall) {
-            if(this.protocolEngine.getOracle()) {
-                // wait a while
-                try {
-                    System.out.println(this.localPlayerName + ": " + "wait a moment");
-                    Thread.sleep(WAITING_PERIOD_TO_AVOID_DEADLOCK);
-                } catch (InterruptedException e) {
-                    // ignore
-                }
-            }
-
-            System.out.println(this.localPlayerName + ": " + "localCall");
-            wantedSymbol = this.protocolEngine.pick(userName, wantedSymbol);
-            System.out.println(this.localPlayerName + ": " + "proceed with " + wantedSymbol);
         }
 
         System.out.println(this.localPlayerName + ": " + "userName == " + userName + " | symbol == " + wantedSymbol);
@@ -114,12 +115,22 @@ public class TicTacToeImpl implements TicTacToe, TicTacToeDebugHelper {
 
     private TicTacToePiece[][] board = new TicTacToePiece[3][3]; // horizontal / vertical
 
+
+    @Override
+    public boolean set(TicTacToeBoardPosition position) throws GameException, StatusException {
+        return this.set(this.localSymbol, position);
+    }
+
     @Override
     public boolean set(TicTacToePiece piece, TicTacToeBoardPosition position)
             throws GameException, StatusException {
 
         if(this.status != Status.ACTIVE_O && this.status != Status.ACTIVE_X) {
             throw new StatusException("set called but wrong status");
+        }
+
+        if(piece == null) {
+            throw new GameException("piece must not be null");
         }
 
         if( (piece == TicTacToePiece.O) && this.status == Status.ACTIVE_X)
@@ -137,15 +148,26 @@ public class TicTacToeImpl implements TicTacToe, TicTacToeDebugHelper {
 
         this.board[horizontal][vertical] = piece;
 
-        boolean ended = this.hasWon(piece);
+        boolean hasWon = this.hasWon(piece);
 
-        if(ended) {
+        if(hasWon) {
+            System.out.println(this.localPlayerName + ": set " + piece  + " - has won");
             this.status = Status.ENDED;
+            if(this.localSymbol == piece) this.localWon = true;
         } else {
             this.status = this.status == Status.ACTIVE_O ? Status.ACTIVE_X : Status.ACTIVE_O;
+            System.out.println(this.localPlayerName + ": set " + piece  + " - not won, new status " + this.status);
         }
 
-        return ended;
+        // tell other side - if local call (test of null if for some unit tests)
+        if(this.localSymbol == piece && this.protocolEngine != null) {
+            this.protocolEngine.set(piece, position);
+        } else {
+            // remote call
+            this.notifyBoardChanged();
+        }
+
+        return hasWon;
     }
 
     private boolean hasWon(TicTacToePiece piece) {
@@ -220,29 +242,72 @@ public class TicTacToeImpl implements TicTacToe, TicTacToeDebugHelper {
 
     public void setProtocolEngine(TicTacToeProtocolEngine protocolEngine) {
         this.protocolEngine = protocolEngine;
+        this.protocolEngine.subscribeGameSessionEstablishedListener(this);
     }
 
-
-    //////////////////////////////////////////////////////////////////////////////////////////////////////////
-    //                                             debug helper                                             //
-    //////////////////////////////////////////////////////////////////////////////////////////////////////////
+    @Override
+    public Status getStatus() {
+        return this.status;
+    }
 
     @Override
-    public void printBoard() {
-        for(int v = 2; v > -1; v--) {
-            System.out.print(v + " ");
-            for(int h = 0; h < 3; h++) {
-                TicTacToePiece piece = this.board[h][v];
-                if(piece == null) { System.out.print("   "); }
-                else {
-                    switch (piece) {
-                        case O: System.out.print(" O "); break;
-                        case X: System.out.print(" X "); break;
-                    }
+    public boolean isActive() {
+        if(this.localSymbol == null) return false;
+
+        return (
+            (this.getStatus() == Status.ACTIVE_O && this.localSymbol == TicTacToePiece.O)
+            ||
+            (this.getStatus() == Status.ACTIVE_X && this.localSymbol == TicTacToePiece.X));
+    }
+
+    @Override
+    public boolean hasWon() {
+        return this.status == Status.ENDED && this.localWon;
+    }
+
+    @Override
+    public boolean hasLost() {
+        return this.status == Status.ENDED && !this.localWon;
+    }
+
+    /////////////////////////////////////////////////////////////////////////////////////////////////////////
+    //                                            observed                                                 //
+    /////////////////////////////////////////////////////////////////////////////////////////////////////////
+
+    private List<LocalBoardChangeListener> boardChangeListenerList = new ArrayList<>();
+    @Override
+    public void subscribeChangeListener(LocalBoardChangeListener changeListener) {
+        this.boardChangeListenerList.add(changeListener);
+    }
+
+    private void notifyBoardChanged() {
+        // are there any listeners ?
+        if(this.boardChangeListenerList == null || this.boardChangeListenerList.isEmpty()) return;
+
+        // yes - there are - create a thread and inform them
+        (new Thread(new Runnable() {
+            @Override
+            public void run() {
+                for(LocalBoardChangeListener listener : TicTacToeImpl.this.boardChangeListenerList) {
+                    listener.changed();
                 }
             }
-            System.out.print("\n");
-        }
-        System.out.println("   A  B  C");
+        })).start();
+    }
+
+    /////////////////////////////////////////////////////////////////////////////////////////////////////////
+    //                                            listener                                                 //
+    /////////////////////////////////////////////////////////////////////////////////////////////////////////
+
+    @Override
+    public void gameSessionEstablished(boolean oracle, String partnerName) {
+        System.out.println(this.localPlayerName + ": gameSessionEstablished with " + partnerName + " | " + oracle);
+
+        this.localSymbol = oracle ? TicTacToePiece.O : TicTacToePiece.X;
+        this.remoteSymbol = this.localSymbol == TicTacToePiece.O ? TicTacToePiece.X : TicTacToePiece.O;
+        this.remotePlayerName = partnerName;
+
+        // O always starts
+        this.status = Status.ACTIVE_O;
     }
 }

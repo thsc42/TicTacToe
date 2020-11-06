@@ -1,10 +1,10 @@
 package tictactoe;
 
-class TicTacToeBoardPosition {
+public class TicTacToeBoardPosition {
     private final String sCoordinate;
     private final int iCoordinate;
 
-    TicTacToeBoardPosition(String sCoordinate, int iCoordinate) {
+    public TicTacToeBoardPosition(String sCoordinate, int iCoordinate) {
         this.sCoordinate = sCoordinate;
         this.iCoordinate = iCoordinate;
     }
