@@ -246,7 +246,6 @@ public class TicTacToeUI implements TCPStreamCreatedListener, GameSessionEstabli
     //                                              listener                                                      //
     ////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 
-    // TODO - explain
     @Override
     public void streamCreated(TCPStream stream) {
         // connection established - setup protocol engine
@@ -254,7 +253,6 @@ public class TicTacToeUI implements TCPStreamCreatedListener, GameSessionEstabli
         this.protocolEngine = new TicTacToeProtocolEngine(this.gameEngine, this.playerName);
         this.gameEngine.setProtocolEngine(protocolEngine);
 
-        // TODO explain
         this.protocolEngine.subscribeGameSessionEstablishedListener(this);
 
         try {

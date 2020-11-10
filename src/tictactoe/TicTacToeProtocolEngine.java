@@ -250,7 +250,6 @@ public class TicTacToeProtocolEngine implements TicTacToe, Runnable, ProtocolEng
         }
 
 
-        // TODO - explain
         // call listener
         if(this.sessionCreatedListenerList != null && !this.sessionCreatedListenerList.isEmpty()) {
             for(GameSessionEstablishedListener oclistener : this.sessionCreatedListenerList) {
@@ -295,12 +294,6 @@ public class TicTacToeProtocolEngine implements TicTacToe, Runnable, ProtocolEng
     public void close() throws IOException {
         if(this.os != null) { this.os.close();}
         if(this.is != null) { this.is.close();}
-    }
-
-    @Override
-    public boolean getOracle() throws StatusException {
-        this.log("asked for an oracle - return " + this.oracle);
-        return this.oracle;
     }
 
     private List<GameSessionEstablishedListener> sessionCreatedListenerList = new ArrayList<>();

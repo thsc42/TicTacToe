@@ -21,13 +21,6 @@ public interface ProtocolEngine {
      */
     void close() throws IOException;
 
-    /**
-     *
-     * @return boolean value - ensure that both side use different ons
-     * @throws StatusException if oracle not yet set
-     */
-    boolean getOracle() throws StatusException;
-
     void subscribeGameSessionEstablishedListener(GameSessionEstablishedListener ocListener);
 
     void unsubscribeGameSessionEstablishedListener(GameSessionEstablishedListener ocListener);

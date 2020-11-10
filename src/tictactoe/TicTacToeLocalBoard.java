@@ -1,7 +1,5 @@
 package tictactoe;
 
-import javax.swing.event.ChangeListener;
-
 public interface TicTacToeLocalBoard extends TicTacToe {
 
     /**
