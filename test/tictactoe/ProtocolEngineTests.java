@@ -14,9 +14,9 @@ public class ProtocolEngineTests {
     public static final long TEST_THREAD_SLEEP_DURATION = 1000;
 
     private TicTacToe getTTTEngine(InputStream is, OutputStream os, TicTacToe gameEngine) throws IOException {
-        TicTacToeProtocolEngine ticTacToeProtocolEngine = new TicTacToeProtocolEngine(gameEngine);
-        ticTacToeProtocolEngine.handleConnection(is, os);
-        return ticTacToeProtocolEngine;
+        TicTacToeTCPProtocolEngine ticTacToeTCPProtocolEngine = new TicTacToeTCPProtocolEngine(gameEngine);
+        ticTacToeTCPProtocolEngine.handleConnection(is, os);
+        return ticTacToeTCPProtocolEngine;
     }
 
     /*
@@ -199,18 +199,18 @@ public class ProtocolEngineTests {
         // create Alice's game engine
         TicTacToeImpl aliceGameEngine = new TicTacToeImpl(ALICE);
         // create real protocol engine on Alice's side
-        TicTacToeProtocolEngine aliceTicTacToeProtocolEngine =
-                new TicTacToeProtocolEngine(aliceGameEngine, ALICE);
+        TicTacToeTCPProtocolEngine aliceTicTacToeTCPProtocolEngine =
+                new TicTacToeTCPProtocolEngine(aliceGameEngine, ALICE);
 
-        aliceGameEngine.setProtocolEngine(aliceTicTacToeProtocolEngine);
+        aliceGameEngine.setProtocolEngine(aliceTicTacToeTCPProtocolEngine);
 
         // create Bob's game engine
         TicTacToeImpl bobGameEngine = new TicTacToeImpl(BOB);
         // create real protocol engine on Bob's side
-        TicTacToeProtocolEngine bobTicTacToeProtocolEngine =
-                new TicTacToeProtocolEngine(bobGameEngine, BOB);
+        TicTacToeTCPProtocolEngine bobTicTacToeTCPProtocolEngine =
+                new TicTacToeTCPProtocolEngine(bobGameEngine, BOB);
 
-        bobGameEngine.setProtocolEngine(bobTicTacToeProtocolEngine);
+        bobGameEngine.setProtocolEngine(bobTicTacToeTCPProtocolEngine);
 
         ////////////////////////////////////////////////////////////////////////////////////////////////////////////
         //                                           setup tcp                                                    //
@@ -229,8 +229,8 @@ public class ProtocolEngineTests {
         //                                       launch protocol engine                                           //
         ////////////////////////////////////////////////////////////////////////////////////////////////////////////
         // give protocol engines streams and launch
-        aliceTicTacToeProtocolEngine.handleConnection(aliceSide.getInputStream(), aliceSide.getOutputStream());
-        bobTicTacToeProtocolEngine.handleConnection(bobSide.getInputStream(), bobSide.getOutputStream());
+        aliceTicTacToeTCPProtocolEngine.handleConnection(aliceSide.getInputStream(), aliceSide.getOutputStream());
+        bobTicTacToeTCPProtocolEngine.handleConnection(bobSide.getInputStream(), bobSide.getOutputStream());
 
         // give it a moment - important stop this test thread - to threads must be launched
         System.out.println("give threads a moment to be launched");
@@ -247,8 +247,8 @@ public class ProtocolEngineTests {
         //                                             tidy up                                                    //
         ////////////////////////////////////////////////////////////////////////////////////////////////////////////
 
-        aliceTicTacToeProtocolEngine.close();
-        bobTicTacToeProtocolEngine.close();
+        aliceTicTacToeTCPProtocolEngine.close();
+        bobTicTacToeTCPProtocolEngine.close();
 
         // stop test thread to allow operating system to close sockets
         Thread.sleep(TEST_THREAD_SLEEP_DURATION);
@@ -271,18 +271,18 @@ public class ProtocolEngineTests {
         // create Alice's game engine
         TicTacToeImpl aliceGameEngine = new TicTacToeImpl(ALICE);
         // create real protocol engine on Alice's side
-        TicTacToeProtocolEngine aliceTicTacToeProtocolEngine =
-                new TicTacToeProtocolEngine(aliceGameEngine, ALICE);
+        TicTacToeTCPProtocolEngine aliceTicTacToeTCPProtocolEngine =
+                new TicTacToeTCPProtocolEngine(aliceGameEngine, ALICE);
 
-        aliceGameEngine.setProtocolEngine(aliceTicTacToeProtocolEngine);
+        aliceGameEngine.setProtocolEngine(aliceTicTacToeTCPProtocolEngine);
 
         // create Bob's game engine
         TicTacToeImpl bobGameEngine = new TicTacToeImpl(BOB);
         // create real protocol engine on Bob's side
-        TicTacToeProtocolEngine bobTicTacToeProtocolEngine =
-                new TicTacToeProtocolEngine(bobGameEngine, BOB);
+        TicTacToeTCPProtocolEngine bobTicTacToeTCPProtocolEngine =
+                new TicTacToeTCPProtocolEngine(bobGameEngine, BOB);
 
-        bobGameEngine.setProtocolEngine(bobTicTacToeProtocolEngine);
+        bobGameEngine.setProtocolEngine(bobTicTacToeTCPProtocolEngine);
 
         ////////////////////////////////////////////////////////////////////////////////////////////////////////////
         //                                           setup tcp                                                    //
@@ -301,8 +301,8 @@ public class ProtocolEngineTests {
         //                                       launch protocol engine                                           //
         ////////////////////////////////////////////////////////////////////////////////////////////////////////////
         // give protocol engines streams and launch
-        aliceTicTacToeProtocolEngine.handleConnection(aliceSide.getInputStream(), aliceSide.getOutputStream());
-        bobTicTacToeProtocolEngine.handleConnection(bobSide.getInputStream(), bobSide.getOutputStream());
+        aliceTicTacToeTCPProtocolEngine.handleConnection(aliceSide.getInputStream(), aliceSide.getOutputStream());
+        bobTicTacToeTCPProtocolEngine.handleConnection(bobSide.getInputStream(), bobSide.getOutputStream());
 
         // give it a moment - important stop this test thread - to threads must be launched
         System.out.println("give threads a moment to be launched");
@@ -347,8 +347,8 @@ public class ProtocolEngineTests {
         //                                             tidy up                                                    //
         ////////////////////////////////////////////////////////////////////////////////////////////////////////////
 
-        aliceTicTacToeProtocolEngine.close();
-        bobTicTacToeProtocolEngine.close();
+        aliceTicTacToeTCPProtocolEngine.close();
+        bobTicTacToeTCPProtocolEngine.close();
 
         // stop test thread to allow operating system to close sockets
         Thread.sleep(TEST_THREAD_SLEEP_DURATION);

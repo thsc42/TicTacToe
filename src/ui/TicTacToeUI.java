@@ -21,7 +21,7 @@ public class TicTacToeUI implements TCPStreamCreatedListener, GameSessionEstabli
     private final TicTacToeImpl gameEngine;
     private final TicTacToeLocalBoard localBord;
     private TCPStream tcpStream;
-    private TicTacToeProtocolEngine protocolEngine;
+    private TicTacToeTCPProtocolEngine protocolEngine;
     private String partnerName;
 
     public static void main(String[] args) throws IOException {
@@ -249,7 +249,7 @@ public class TicTacToeUI implements TCPStreamCreatedListener, GameSessionEstabli
     public void streamCreated(TCPStream stream) {
         // connection established - setup protocol engine
         System.out.println("stream created - setup engine - we can play quite soon.");
-        this.protocolEngine = new TicTacToeProtocolEngine(this.gameEngine, this.playerName);
+        this.protocolEngine = new TicTacToeTCPProtocolEngine(this.gameEngine, this.playerName);
         this.gameEngine.setProtocolEngine(protocolEngine);
 
         this.protocolEngine.subscribeGameSessionEstablishedListener(this);
