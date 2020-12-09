@@ -8,7 +8,8 @@ import java.util.ArrayList;
 import java.util.List;
 import java.util.Random;
 
-public class TicTacToeTCPProtocolEngine extends TicTacToeProtocolEngine implements TicTacToe, Runnable, ProtocolEngine {
+public class TicTacToeTCPProtocolEngine extends TicTacToeProtocolEngine
+        implements Runnable, ProtocolEngine {
     private static final String DEFAULT_NAME = "anonymousProtocolEngine";
     private String name;
     private OutputStream os;
@@ -111,25 +112,8 @@ public class TicTacToeTCPProtocolEngine extends TicTacToeProtocolEngine implemen
             e.printStackTrace();
         }
 
-
-        // call listener
-        if(this.sessionCreatedListenerList != null && !this.sessionCreatedListenerList.isEmpty()) {
-            for(GameSessionEstablishedListener oclistener : this.sessionCreatedListenerList) {
-                new Thread(new Runnable() {
-                    @Override
-                    public void run() {
-                        try {
-                            Thread.sleep(1); // block a moment to let read thread start - just in case
-                        } catch (InterruptedException e) {
-                            // will not happen
-                        }
-                        oclistener.gameSessionEstablished(
-                                TicTacToeTCPProtocolEngine.this.oracle,
-                                TicTacToeTCPProtocolEngine.this.partnerName);
-                    }
-                }).start();
-            }
-        }
+        this.notifyGamesSessionEstablished(TicTacToeTCPProtocolEngine.this.oracle,
+                TicTacToeTCPProtocolEngine.this.partnerName);
 
         try {
             boolean again = true;
@@ -156,22 +140,6 @@ public class TicTacToeTCPProtocolEngine extends TicTacToeProtocolEngine implemen
     public void close() throws IOException {
         if(this.os != null) { this.os.close();}
         if(this.is != null) { this.is.close();}
-    }
-
-    private List<GameSessionEstablishedListener> sessionCreatedListenerList = new ArrayList<>();
-
-    ///////////////////////////////////////////////////////////////////////////////////////////////////////////
-    //                                         oracle creation listener                                      //
-    ///////////////////////////////////////////////////////////////////////////////////////////////////////////
-
-    @Override
-    public void subscribeGameSessionEstablishedListener(GameSessionEstablishedListener ocListener) {
-        this.sessionCreatedListenerList.add(ocListener);
-    }
-
-    @Override
-    public void unsubscribeGameSessionEstablishedListener(GameSessionEstablishedListener ocListener) {
-        this.sessionCreatedListenerList.remove(ocListener);
     }
 
     private String produceLogString(String message) {

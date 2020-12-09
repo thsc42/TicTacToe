@@ -11,7 +11,9 @@ import java.io.IOException;
 import java.io.InputStream;
 import java.util.Iterator;
 
-public class TicTacToeASAPProtocolEngine extends TicTacToeProtocolEngine implements TicTacToe, ASAPMessageReceivedListener {
+public class TicTacToeASAPProtocolEngine extends TicTacToeProtocolEngine
+        implements TicTacToe, ASAPMessageReceivedListener {
+
     private static final CharSequence TICTACTOE_APP = "TicTacToe_App";
     private static final CharSequence URI = "ttt://set";
     private final ASAPMessageSender asapMessageSender;
@@ -28,10 +30,10 @@ public class TicTacToeASAPProtocolEngine extends TicTacToeProtocolEngine impleme
     public boolean set(TicTacToePiece piece, TicTacToeBoardPosition position) throws GameException, StatusException {
         ByteArrayOutputStream baos = new ByteArrayOutputStream();
         this.serializeSet(piece, position, baos);
-        byte[] tictactoeMessage = baos.toByteArray();
+        byte[] tttMessage = baos.toByteArray();
 
         try {
-            asapMessageSender.sendASAPMessage(TICTACTOE_APP, URI, tictactoeMessage);
+            asapMessageSender.sendASAPMessage(TICTACTOE_APP, URI, tttMessage);
         } catch (ASAPException e) {
             throw new GameException(e.getLocalizedMessage());
         }

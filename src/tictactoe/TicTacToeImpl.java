@@ -15,7 +15,7 @@ public class TicTacToeImpl implements TicTacToe, TicTacToeLocalBoard, GameSessio
     private String remotePlayerName;
     private Status status = Status.START;
     HashMap<TicTacToePiece, String> player = new HashMap<>();
-    private TicTacToeTCPProtocolEngine protocolEngine;
+    private TicTacToeProtocolEngine protocolEngine;
     private TicTacToePiece localSymbol;
     private TicTacToePiece remoteSymbol;
     private boolean localWon;
@@ -240,7 +240,7 @@ public class TicTacToeImpl implements TicTacToe, TicTacToeLocalBoard, GameSessio
     //                                       constructor helper                                             //
     //////////////////////////////////////////////////////////////////////////////////////////////////////////
 
-    public void setProtocolEngine(TicTacToeTCPProtocolEngine protocolEngine) {
+    public void setProtocolEngine(TicTacToeProtocolEngine protocolEngine) {
         this.protocolEngine = protocolEngine;
         this.protocolEngine.subscribeGameSessionEstablishedListener(this);
     }
