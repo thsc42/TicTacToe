@@ -51,7 +51,6 @@ public class TicTacToeUI implements TCPStreamCreatedListener, GameSessionEstabli
         this.localBord.subscribeChangeListener(this);
     }
 
-
     public void printUsage() {
         StringBuilder b = new StringBuilder();
 
